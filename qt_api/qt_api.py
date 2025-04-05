@@ -691,7 +691,16 @@ def get_candles(symbol_id, start_time, end_time, interval="OneMinute"):
             }
     
     Note:
-        This call is limited to returning 2,000 candlesticks in a single response.
+        This call is limited to returning 20,000 candlesticks in a single response.
+
+    Time format required:
+        "start": "2014-01-02T00:00:00.000000-05:00",
+        "end": "2014-01-03T00:00:00.000000-05:00"
+    Example usage:
+        days_back = 7
+        start_time = (datetime.datetime.now() - datetime.timedelta(days=days_back)).replace(hour=0, minute=0, second=0, microsecond=0).astimezone().isoformat()
+        end_time = datetime.datetime.now().replace(hour=23, minute=59, second=59, microsecond=0).astimezone().isoformat()
+        get_candles(symbol_id, start_time, end_time, interval="OneMinute")
     """
     # Get the token data
     token_data = get_questrade_token()
