@@ -1,0 +1,20 @@
+secrets/
+models/
+
+*.parquet
+*.db
+*.pkl
+
+# AutoGluon specific
+AutogluonModels/
+models/
+
+# Data directories
+data/backups/
+data/parquet/
+
+# Specific large files
+data/backups/candles_backup_*.db
+data/parquet/*_AG_combined.parquet
+notebooks/AutogluonModels/
+models/autogluon-*/
