@@ -6,6 +6,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pandas as pd
 import logging
+import matplotlib.pyplot as plt
 
 # Add the parent directory to sys.path to make the api module importable
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -343,7 +344,7 @@ def update_all_symbols(backup_db=False):
 
     if backup_db:
         backup_database()
-        
+
     print("\n\033[92m✓ All symbols processed successfully.\033[0m")
 
 def load_all_candles():
@@ -546,8 +547,8 @@ def db_to_parquet():
         SELECT * FROM candles
         ORDER BY symbol, interval, start
         """
-        # Explicitly specify parse_dates when reading from SQL
-        df = pd.read_sql_query(query, conn, parse_dates=['start', 'end'])
+        # Read SQL data without parsing dates yet
+        df = pd.read_sql_query(query, conn)
         print(f"\033[94m✓ Retrieved {len(df)} records from database\033[0m")
         
         # Create a single Parquet file with all data
@@ -559,9 +560,9 @@ def db_to_parquet():
         # Set multi-index for better organization
         if not df.empty:
             print(f"\033[94m🔧 Setting multi-index on dataframe...\033[0m")
-            # Ensure start is datetime before setting as index
-            df['start'] = pd.to_datetime(df['start'])
-            df['end'] = pd.to_datetime(df['end'])
+            # Convert datetime columns with utc=True to handle timezone-aware datetimes
+            df['start'] = pd.to_datetime(df['start'], utc=True)
+            df['end'] = pd.to_datetime(df['end'], utc=True)
             df.set_index(['symbol', 'interval', 'start'], inplace=True)
         else:
             print(f"\033[93m⚠️ No data found in database\033[0m")
@@ -572,22 +573,26 @@ def db_to_parquet():
         print(f"\033[92m✓ Converted all candle data to Parquet format at {parquet_path}\033[0m")
         print(f"\033[92m✓ Total records: {len(df)}\033[0m")
 
-def load_parquet():
+def load_parquet(file_name):
     """Load Parquet file into a pandas DataFrame."""
     # Find the most recent parquet file
     parquet_dir = DATA_DIR / 'parquet'
-    parquet_files = list(parquet_dir.glob('*_AG_combined.parquet'))
-    print(parquet_files)
+    parquet_files = list(parquet_dir.glob(f'*_{file_name}.parquet'))
+    
     if not parquet_files:
-        raise FileNotFoundError("No parquet files found in the data directory")
+        raise FileNotFoundError(f"No parquet files found matching pattern '*_{file_name}.parquet' in {parquet_dir}")
     
-    # Sort files by name (which includes timestamp) to get the most recent
-    most_recent_file = sorted(parquet_files)[-1]
-    print(f"\033[94m📂 Loading most recent parquet file: {most_recent_file.name}\033[0m")
+    # Get the most recent file
+    latest_file = max(parquet_files, key=lambda x: x.stat().st_mtime)
     
-    return pd.read_parquet(most_recent_file)
-
-import matplotlib.pyplot as plt
+    # Read the parquet file
+    df = pd.read_parquet(latest_file)
+    
+    # Reset the index if it's a multi-index
+    if isinstance(df.index, pd.MultiIndex):
+        df = df.reset_index()
+    
+    return df
 
 # Function to plot simple line chart for stock data
 def parquet_plot_ohlc(df, symbol, interval='OneMinute', n_days=None):

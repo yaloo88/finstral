@@ -1,5 +1,7 @@
 secrets/
 models/
+__pycache__/
+data/
 
 *.parquet
 *.db
