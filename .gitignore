@@ -1,15 +1,21 @@
+# Directories to ignore
 secrets/
 models/
 __pycache__/
 data/
+AutogluonModels/
 
+# Python cache files
+*.py[cod]
+*$py.class
+
+# Data files
 *.parquet
 *.db
 *.pkl
 
 # AutoGluon specific
-AutogluonModels/
-models/
+models/autogluon-*/
 
 # Data directories
 data/backups/
@@ -19,4 +25,3 @@ data/parquet/
 data/backups/candles_backup_*.db
 data/parquet/*_AG_combined.parquet
 notebooks/AutogluonModels/
-models/autogluon-*/
